@@ -18,22 +18,13 @@ function key_down(k) {
     board.draw_board();
 
   } else if (k.keyCode == 38) {    // up arrow
-    if (!board.collides(board.px, board.py, (board.rot + 1) % 4)) {
-      board.rot = (board.rot + 1) % 4;
-      board.draw_board();
-    }
+    board.piece_rotate();
 
   } else if (k.keyCode == 39) {    // right arrow
-    if (!board.collides(board.px + 1, board.py, board.rot)) {
-      board.px++;
-      board.draw_board();
-    }
+    board.piece_right();
 
   } else if (k.keyCode == 37) {    // left arrow
-    if (!board.collides(board.px - 1, board.py, board.rot)) {
-      board.px--;
-      board.draw_board();
-    }
+    board.piece_left();
 
   } else if (k.keyCode == 32) {    // [SPACE]
     do {
@@ -44,7 +35,7 @@ function key_down(k) {
   } else if (k.keyCode == 107) {   // [PLUS]
     if (board.level < 16) {
       board.level++;
-      tscreen.show_scores(board.level, Math.floor(board.score), board.lines);
+      board.show_scores();
     }
   }
 }

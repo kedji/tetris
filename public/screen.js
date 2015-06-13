@@ -14,7 +14,7 @@ var Screen = function() {
 }
 
 // Show the scorecard text
-Screen.prototype.show_scores = function(level, score, lines) {
+Screen.prototype.draw_scores = function(level, score, lines) {
   var titles = { "Level": level, "Score": score, "Lines": lines };
   var row = 20;
 

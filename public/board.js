@@ -71,7 +71,7 @@ Board.prototype.next_piece = function() {
   this.rot = 0;
 
   // Update the view of the scores and the next piece
-  this.tscreen.show_scores(this.level, Math.floor(this.score), this.lines);
+  this.show_scores();
   var pos;
   for (var sq = 0; sq < 4; sq++) {
     pos = this.shapes[this.next_shape][0][sq];
@@ -174,6 +174,33 @@ Board.prototype.tick = function() {
   this.drop_ticks--;
   if (this.drop_ticks < 1) {
     this.drop_piece();
+    this.draw_board();
+  }
+}
+
+// Tell the view to report the level, score, and line count
+Board.prototype.show_scores = function() {
+  this.tscreen.draw_scores(this.level, Math.floor(this.score), this.lines);
+}
+
+// Move the piece in the given manner (if possible)
+Board.prototype.piece_left = function() {
+  if (!this.collides(this.px - 1, this.py, this.rot)) {
+    this.px--;
+    this.draw_board();
+  }
+}
+
+Board.prototype.piece_right = function() {
+  if (!this.collides(this.px + 1, this.py, this.rot)) {
+    this.px++;
+    this.draw_board();
+  }
+}
+
+Board.prototype.piece_rotate = function() {
+  if (!this.collides(this.px, this.py, (this.rot + 1) % 4)) {
+    this.rot = (this.rot + 1) % 4;
     this.draw_board();
   }
 }
