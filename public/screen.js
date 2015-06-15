@@ -17,13 +17,13 @@ function Screen () {
   // Show the scorecard text
   this.draw_scores = function(level, score, lines) {
     var titles = { "Level": level, "Score": score, "Lines": lines };
-    var row = 16;
+    var row = 12;
 
     // First clear the score and next_piece areas
     canvas.beginPath();
     canvas.strokeStyle = strokes[0];
     canvas.fillStyle = colors[0];
-    canvas.rect(0, 0, 195, 250);
+    canvas.rect(0, 0, 195, 216);
     canvas.fill();
     canvas.stroke();
 
@@ -61,7 +61,18 @@ function Screen () {
     canvas.lineWidth = 2;
     canvas.strokeStyle = strokes[color];
     canvas.fillStyle = colors[color];
-    canvas.rect(x * 16 + 41, y * 16 + 177, 13, 13);
+    canvas.rect(x * 16 + 41, y * 16 + 146, 13, 13);
+    canvas.fill();
+    canvas.stroke();
+  }
+
+  // Draw a miniature version of a board square
+  this.draw_peer_square = function(x, y, color) {
+    canvas.beginPath();
+    canvas.lineWidth = 2;
+    canvas.strokeStyle = strokes[color];
+    canvas.fillStyle = colors[color];
+    canvas.rect(x * 16 + 14, y * 16 + 230, 13, 13);
     canvas.fill();
     canvas.stroke();
   }
