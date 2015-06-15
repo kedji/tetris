@@ -1,8 +1,13 @@
 // This file defines the Controller component of the Tetris MVC framework,
 // which drives the local game by interpreting keystrokes.
 
+var rtc = new TetRTC();
 var tscreen = new Screen();
 var board = new Board(tscreen);
+
+// Register our RTC timers
+rtc.discover_iid = setInterval(function() { rtc.discover(); }, 1000);
+rtc.offer_tid = setTimeout(function() { rtc.make_offer(); }, 4500);
 
 // Start our game
 board.game = setInterval(function() { board.tick(); }, 20);
