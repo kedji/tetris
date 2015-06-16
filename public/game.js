@@ -4,13 +4,18 @@
 var rtc = new TetRTC();
 var tscreen = new Screen();
 var board = new Board(tscreen);
+var peer = new Board(tscreen);
 
 // Register our RTC timers
 rtc.discover_iid = setInterval(function() { rtc.discover(); }, 1000);
-rtc.offer_tid = setTimeout(function() { rtc.make_offer(); }, 4500);
+rtc.offer_iid = setInterval(function() { rtc.make_offer(); }, 4260);
+
+// Handle incoming messages from our peer
+peer.alt = true;
+rtc.recv_obj(incoming_peer_state);
 
 // Start our game
-board.game = setInterval(function() { board.tick(); }, 20);
+board.game = setInterval(function() { board.tick(); update_peer(); }, 20);
 document.addEventListener("keydown", key_down);
 
 // Read key-strokes (as long as the game is in progress)
@@ -43,4 +48,21 @@ function key_down(k) {
       board.show_scores();
     }
   }
+  update_peer();
+}
+
+// Check to see if any piece/board updates need to be sent to our peer (and if
+// so, send them).
+function update_peer() {
+  var update = board.board_update();
+  if (update)
+    rtc.send_obj(update)
+  update = board.piece_update();
+if (update) { console.log("sending: " + JSON.stringify(update)); }
+  if (update)
+    rtc.send_obj(update)
+}
+
+function incoming_peer_state(obj) {
+  peer.peer_update(obj);
 }

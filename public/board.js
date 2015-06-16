@@ -3,6 +3,7 @@
 
 var Board = function(tscreen) {
   this.tscreen = tscreen;
+  this.alt = false;  // alternate (peer) board?
 
   // X and Y coordinates of the 4 squares of each of the 7 tetrominos
   // Index by: shapes[shape 0-6][rotation 0-4][square 0-4][axis 0-1]
@@ -54,12 +55,16 @@ var Board = function(tscreen) {
   this.next_shape = Math.floor(Math.random() * 7);
   this.px = 4;   // left-most position of the current piece on the board
   this.py = 0;   // top-most position of the current piece
+  this.rot = 0;  // current piece rotation
   this.next_piece();
 
   // Real-time gameplay
-  this.drop_ticks = 0;       // intervals before next auto-drop
-  this.rot = 0;              // current piece rotation
-  this.game = false;         // doubles as setInterval identifier
+  this.drop_ticks = 0;         // intervals before next auto-drop
+  this.game = false;           // doubles as setInterval identifier
+
+  // State change indicators for multiplayer mode
+  this.piece_obj = null;       // gets updated every time a piece moves
+  this.board_obj = null;       // gets updated every time a line is cleared
 }
 
 // Pick an upcoming random piece, reset the current piece stats
@@ -77,6 +82,7 @@ Board.prototype.next_piece = function() {
     pos = this.shapes[this.next_shape][0][sq];
     tscreen.draw_next_square(pos[0], pos[1], this.next_shape + 1);
   }
+  this.board_share();
 }
 
 // Check for a piece collision assuming the given top-left x and y positions
@@ -113,6 +119,7 @@ Board.prototype.drop_piece = function() {
   } else {
     this.py++;
   }
+  this.piece_share();
 
   // If the piece was dropped manually and early enough, reward the player with
   // a few extra points.
@@ -150,23 +157,29 @@ Board.prototype.clear_lines = function() {
 
 Board.prototype.draw_board = function() {
   var col, row, sq, p;
+  var bak = [];
 
   // Temporarily super-impose current piece onto the board
   for (sq = 0; sq < 4; sq++) {
     p = this.shapes[this.shape][this.rot][sq];
+    bak[sq] = this.board[this.px + p[0]][this.py + p[1]];
     this.board[this.px + p[0]][this.py + p[1]] = this.shape + 1;
   }
 
   // Draw every square on the board, even empty squares
   for (col = 0; col < 10; col++) {
-    for (row = 0; row < 20; row++)
-      tscreen.draw_square(col, row, this.board[col][row]);
+    for (row = 0; row < 20; row++) {
+      if (this.alt)
+        tscreen.draw_peer_square(col, row, this.board[col][row]);
+      else
+        tscreen.draw_square(col, row, this.board[col][row]);
+    }
   }
 
   // Revert our super-imposed current piece
   for (sq = 0; sq < 4; sq++) {
     p = this.shapes[this.shape][this.rot][sq];
-    this.board[this.px + p[0]][this.py + p[1]] = 0;
+    this.board[this.px + p[0]][this.py + p[1]] = bak[sq];
   }
 }
 
@@ -188,6 +201,7 @@ Board.prototype.piece_left = function() {
   if (!this.collides(this.px - 1, this.py, this.rot)) {
     this.px--;
     this.draw_board();
+    this.piece_share();
   }
 }
 
@@ -195,6 +209,7 @@ Board.prototype.piece_right = function() {
   if (!this.collides(this.px + 1, this.py, this.rot)) {
     this.px++;
     this.draw_board();
+    this.piece_share();
   }
 }
 
@@ -202,5 +217,65 @@ Board.prototype.piece_rotate = function() {
   if (!this.collides(this.px, this.py, (this.rot + 1) % 4)) {
     this.rot = (this.rot + 1) % 4;
     this.draw_board();
+    this.piece_share();
   }
+}
+
+// Provide an object representing the state of the board, not including
+// the current piece, but including level, lines, and score.
+Board.prototype.board_share = function() {
+  this.board_obj = {
+    board: this.board,
+    level: this.level,
+    lines: this.lines,
+    score: Math.floor(this.score),
+  };
+  return this.board_obj;
+}
+
+// Provide an object containing a small "tactical" update to the board - the
+// location and rotation of the current piece and the number of lines that
+// need to be added to your opponent's board.
+Board.prototype.piece_share = function() {
+  this.piece_obj = {
+    shape: this.shape,
+    rot: this.rot,
+    x: this.px,
+    y: this.py,
+    attack: 0
+  }
+  return this.piece_obj;
+}
+
+// If the board has a piece-movement update, this function will return a
+// descriptive object to that effect. Otherwise it will return null.
+Board.prototype.piece_update = function() {
+  var ret = this.piece_obj;
+  this.piece_obj = null;
+  return ret;
+}
+
+// If the board has a board content update, this function will return a
+// descriptive object to that effect. Otherwise it will return null.
+Board.prototype.board_update = function() {
+  var ret = this.board_obj;
+  this.board_obj = null;
+  return ret;
+}
+
+// Update this board with content from our peer.
+Board.prototype.peer_update = function(update) {
+  if (update.lines != undefined)  this.lines = update.lines;
+  if (update.score != undefined)  this.score = update.score;
+  if (update.level != undefined)  this.level = update.level;
+  if (update.board != undefined)  this.board = update.board;
+  if (update.shape != undefined)  this.shape = update.shape;
+  if (update.rot != undefined)    this.rot   = update.rot;
+  if (update.x != undefined)      this.px    = update.x;
+  if (update.y != undefined)      this.py    = update.y;
+
+  // Only redraw on incoming piece messages, since otherwise we may be
+  // redrawing with old piece information.
+  if (update.shape != undefined)
+    this.draw_board();
 }

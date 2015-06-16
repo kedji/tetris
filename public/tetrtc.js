@@ -3,7 +3,8 @@ function TetRTC() {
   // private "class" variables (I think?)
   var pc = window.pc = new RTCPeerConnection(null, null);
   var offer_type = "offer";
-  var comm;
+  var comm = null;
+  var recv_callback = null;
   var __rtc = this;
 
 
@@ -41,7 +42,9 @@ function TetRTC() {
   }
 
   function recv_msg(ev) {
-    alert(ev.data)
+    console.log("Peer: " + ev.data)
+    if (recv_callback)
+      recv_callback(JSON.parse(ev.data));
   }
 
   function enable_send(evt) {
@@ -52,7 +55,7 @@ function TetRTC() {
 
     // stop polling for signaling messages
     clearInterval(__rtc.discover_iid);
-    clearTimeout(__rtc.offer_tid);
+    clearInterval(__rtc.offer_iid);
   }
 
   function advertise(data) {
@@ -109,6 +112,7 @@ function TetRTC() {
   }
 
   this.make_offer = function() {
+    if (comm) { comm.close(); }
     comm = pc.createDataChannel('sendDataChannel', { reliable: true });
     comm.onopen = enable_send;
     pc.createOffer(function(offer) {
@@ -118,10 +122,16 @@ function TetRTC() {
     }, function() { error('createOffer'); });
   }
 
-  this.make_noise = function() {
+  this.send_obj = function(obj) {
     if (comm) {
-      comm.send("make some noise!");
+try {
+      comm.send(JSON.stringify(obj));
+} catch (err) { }  // kedji - check "comm" to make sure it's ready
     }
+  }
+
+  this.recv_obj = function(callback) {
+    recv_callback = callback;
   }
 
 }
