@@ -2,16 +2,16 @@
 // which drives the local game by interpreting keystrokes.
 
 var rtc = new TetRTC();
-var tscreen = new Screen();
-var board = new Board(tscreen);
-var peer = new Board(tscreen);
+var main_screen = new MainScreen();
+var mini_screen = new MiniScreen();
+var board = new Board(main_screen);
+var peer = new Board(mini_screen);
 
 // Register our RTC timers
 rtc.discover_iid = setInterval(function() { rtc.discover(); }, 1000);
 rtc.offer_iid = setInterval(function() { rtc.make_offer(); }, 4260);
 
 // Handle incoming messages from our peer
-peer.alt = true;
 rtc.recv_obj(incoming_peer_state);
 
 // Start our game

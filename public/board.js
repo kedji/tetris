@@ -3,7 +3,6 @@
 
 var Board = function(tscreen) {
   this.tscreen = tscreen;
-  this.alt = false;  // alternate (peer) board?
 
   // X and Y coordinates of the 4 squares of each of the 7 tetrominos
   // Index by: shapes[shape 0-6][rotation 0-4][square 0-4][axis 0-1]
@@ -80,7 +79,7 @@ Board.prototype.next_piece = function() {
   var pos;
   for (var sq = 0; sq < 4; sq++) {
     pos = this.shapes[this.next_shape][0][sq];
-    tscreen.draw_next_square(pos[0], pos[1], this.next_shape + 1);
+    this.tscreen.draw_next_square(pos[0], pos[1], this.next_shape + 1);
   }
   this.board_share();
 }
@@ -167,13 +166,10 @@ Board.prototype.draw_board = function() {
   }
 
   // Draw every square on the board, even empty squares
+  this.tscreen.clear_board();
   for (col = 0; col < 10; col++) {
-    for (row = 0; row < 20; row++) {
-      if (this.alt)
-        tscreen.draw_peer_square(col, row, this.board[col][row]);
-      else
-        tscreen.draw_square(col, row, this.board[col][row]);
-    }
+    for (row = 0; row < 20; row++)
+      this.tscreen.draw_square(col, row, this.board[col][row]);
   }
 
   // Revert our super-imposed current piece
@@ -278,4 +274,8 @@ Board.prototype.peer_update = function(update) {
   // redrawing with old piece information.
   if (update.shape != undefined)
     this.draw_board();
+
+  // Redraw the score information if we've gotten a full update
+  if (update.board != undefined)
+    this.tscreen.draw_scores(this.level, this.score, this.lines);
 }
