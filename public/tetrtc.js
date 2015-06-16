@@ -1,7 +1,7 @@
 function TetRTC() {
 
   // private "class" variables (I think?)
-  var pc = window.pc = new RTCPeerConnection(null, null);
+  var pc = null;
   var offer_type = "offer";
   var comm = null;
   var recv_callback = null;
@@ -11,6 +11,22 @@ function TetRTC() {
   // ===============
   // Private Methods
   // ===============
+
+  function pc_reset() {
+    pc = window.pc = new RTCPeerConnection(null, null);
+
+    // if our peer sets up a data channel, set our receive channel to that channel
+    pc.ondatachannel = enable_send;
+
+    // add a callback for when ice candidates are created by the peer connection
+    pc.onicecandidate = function(ice_event) {
+      log('Received new ice candidate');
+      if (!ice_event.candidate) {
+        log('Description sent to peer: ' + JSON.stringify(pc.localDescription));
+        advertise({ type: offer_type, sdp: pc.localDescription.sdp });
+      }
+    };
+  }
 
   // Logging helpers
   function log(text) {
@@ -63,23 +79,6 @@ function TetRTC() {
   }
 
 
-  // =========================
-  // Peer Connection Callbacks
-  // =========================
-
-  // if our peer sets up a data channel, set our receive channel to that channel
-  pc.ondatachannel = enable_send;
-
-  // add a callback for when ice candidates are created by the peer connection
-  pc.onicecandidate = function(ice_event) {
-    log('Received new ice candidate');
-    if (!ice_event.candidate) {
-      log('Description sent to peer: ' + JSON.stringify(pc.localDescription));
-      advertise({ type: offer_type, sdp: pc.localDescription.sdp });
-    }
-  };
-
-
   // ==========
   // Public API
   // ==========
@@ -90,6 +89,7 @@ function TetRTC() {
         case "offer":
           log('Received an offer: ' + offer.sdp);
           offer_type = "answer";
+          pc_reset();
           pc.setRemoteDescription(new RTCSessionDescription(offer), function() {
             pc.createAnswer(function(answer) {
               pc.setLocalDescription(new RTCSessionDescription(answer),
@@ -112,7 +112,7 @@ function TetRTC() {
   }
 
   this.make_offer = function() {
-    if (comm) { comm.close(); }
+    pc_reset();
     comm = pc.createDataChannel('sendDataChannel', { reliable: true });
     comm.onopen = enable_send;
     pc.createOffer(function(offer) {
