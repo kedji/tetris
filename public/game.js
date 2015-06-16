@@ -58,11 +58,12 @@ function update_peer() {
   if (update)
     rtc.send_obj(update)
   update = board.piece_update();
-if (update) { console.log("sending: " + JSON.stringify(update)); }
   if (update)
     rtc.send_obj(update)
 }
 
 function incoming_peer_state(obj) {
   peer.peer_update(obj);
+  if (obj.attack != undefined)
+    board.add_attack_lines(obj.attack);
 }

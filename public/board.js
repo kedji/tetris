@@ -107,8 +107,10 @@ Board.prototype.drop_piece = function() {
       yy = this.py + this.shapes[this.shape][this.rot][sq][1];
       this.board[xx][yy] = this.shape + 1;
     }
-    this.clear_lines();
+    yy = this.clear_lines();
     this.next_piece();
+    if (yy > 2)
+      this.board_obj.attack = yy - 2;
 
     // Check for game over
     if (this.collides(this.px, this.py, this.rot)) {
@@ -131,6 +133,8 @@ Board.prototype.drop_piece = function() {
     this.drop_ticks = 5;
 }
 
+// Find completely full horizonal rows and eliminate them. Return
+// the number of rows cleared at once.
 Board.prototype.clear_lines = function() {
   var y, new_lines = 0, row, col;
   for (row = 0; row < 20; row++) {
@@ -152,6 +156,7 @@ Board.prototype.clear_lines = function() {
     if (Math.floor(this.lines / 10) >= this.level)
       this.level = Math.floor(this.lines / 10) + 1;
   }
+  return new_lines;
 }
 
 Board.prototype.draw_board = function() {
@@ -217,6 +222,32 @@ Board.prototype.piece_rotate = function() {
   }
 }
 
+// Add garbage lines to the bottom of our board.
+Board.prototype.add_attack_lines = function(lines) {
+  var x, y;
+  this.py--;
+
+  // Shift all pieces up one notch
+  for (x = 0; x < 10; x++) {
+    for (y = 1; y < 20; y++)
+      this.board[x][y - 1] = this.board[x][y];
+  }
+
+  // Fill and then randomly gap-ify the bottom row
+  for (x = 0; x < 10; x++)
+    this.board[x][19] = Math.floor(Math.random() * 7) + 1;
+  for (x = Math.floor(Math.random() * 7) + 2; x < 10; x++)
+    this.board[Math.floor(Math.random() * 10)][19] = 0;
+
+  // Recurse to add any additional lines
+  if (lines > 1) {
+    this.add_attack_lines(lines - 1);
+  } else {
+    this.draw_board();
+    this.board_share();
+  }
+}
+
 // Provide an object representing the state of the board, not including
 // the current piece, but including level, lines, and score.
 Board.prototype.board_share = function() {
@@ -237,8 +268,7 @@ Board.prototype.piece_share = function() {
     shape: this.shape,
     rot: this.rot,
     x: this.px,
-    y: this.py,
-    attack: 0
+    y: this.py
   }
   return this.piece_obj;
 }
