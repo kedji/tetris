@@ -33,7 +33,8 @@ function TetRTC() {
     console.log(text.replace(/^\s+|\s+$/g, ''));
   }
   function error(err) {
-    log('Encountered an error: ' + err); pc.close();
+    log('Encountered an error: ' + err);
+    pc.close();
   }
 
   // replacement for JQuery's $.getJSON(url, callback)
@@ -58,7 +59,6 @@ function TetRTC() {
   }
 
   function recv_msg(ev) {
-    console.log("Peer: " + ev.data)
     if (recv_callback)
       recv_callback(JSON.parse(ev.data));
   }
@@ -105,16 +105,16 @@ function TetRTC() {
                                   function() { error('answer - setRemoteDescription'); });
           break;
         default:
-          log('Received nothing: ' + offer.sdp);
           break;
       }
     });
   }
 
   this.make_offer = function() {
+    var pending;
     pc_reset();
-    comm = pc.createDataChannel('sendDataChannel', { reliable: true });
-    comm.onopen = enable_send;
+    pending = pc.createDataChannel('sendDataChannel', { reliable: true });
+    pending.onopen = enable_send;
     pc.createOffer(function(offer) {
       pc.setLocalDescription(new RTCSessionDescription(offer),
                              function() {},
@@ -124,9 +124,7 @@ function TetRTC() {
 
   this.send_obj = function(obj) {
     if (comm) {
-try {
       comm.send(JSON.stringify(obj));
-} catch (err) { }  // kedji - check "comm" to make sure it's ready
     }
   }
 
