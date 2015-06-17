@@ -22,13 +22,14 @@ function MainScreen() {
 
     // First clear the score and next_piece areas
     canvas.beginPath();
-    canvas.strokeStyle = p_strokes[0];
+    canvas.strokeStyle = "black";
     canvas.fillStyle = p_colors[0];
     canvas.rect(0, 0, 195, 180);
     canvas.fill();
     canvas.stroke();
 
     // Now draw all our text elements
+    canvas.beginPath();
     canvas.textBaseline = "top";
     canvas.textAlign = "left";
     canvas.font = "bold 22px sans-serif";
