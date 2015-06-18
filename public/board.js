@@ -225,7 +225,8 @@ Board.prototype.piece_rotate = function() {
 // Add garbage lines to the bottom of our board.
 Board.prototype.add_attack_lines = function(lines) {
   var x, y;
-  this.py--;
+  if (this.py > 0)
+    this.py--;
 
   // Shift all pieces up one notch
   for (x = 0; x < 10; x++) {
