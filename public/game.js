@@ -15,6 +15,7 @@ rtc.offer_iid = setInterval(function() { rtc.make_offer(); }, 4260);
 rtc.recv_obj(incoming_peer_state);
 
 // Start our game
+board.next_piece();
 board.game = setInterval(function() { board.tick(); update_peer(); }, 20);
 document.addEventListener("keydown", key_down);
 
