@@ -83,6 +83,8 @@ function TetRTC() {
   // Public API
   // ==========
 
+  // Call this function periodically to poll the server to see if a peer is
+  // available for direct connection.
   this.discover = function() {
     get_json("/discover", function(offer) {
       switch(offer.type) {
@@ -93,16 +95,14 @@ function TetRTC() {
           pc.setRemoteDescription(new RTCSessionDescription(offer), function() {
             pc.createAnswer(function(answer) {
               pc.setLocalDescription(new RTCSessionDescription(answer),
-                                     function() {},
-                                     function() { error('setLocalDescription'); });
-            }, function() { error('createAnswer'); });
+                                     function() {}, error);
+            }, error);
           }, error);
           break;
         case "answer":
           log('Received an answer: ' + offer.sdp);
           pc.setRemoteDescription(new RTCSessionDescription(offer),
-                                  function() {},
-                                  function() { error('answer - setRemoteDescription'); });
+                                  function() {}, error);
           break;
         default:
           break;
@@ -117,9 +117,8 @@ function TetRTC() {
     pending.onopen = enable_send;
     pc.createOffer(function(offer) {
       pc.setLocalDescription(new RTCSessionDescription(offer),
-                             function() {},
-                             function() { error('createOffer - setLocalDescription'); });
-    }, function() { error('createOffer'); });
+                             function() {}, error);
+    }, error);
   }
 
   this.send_obj = function(obj) {
